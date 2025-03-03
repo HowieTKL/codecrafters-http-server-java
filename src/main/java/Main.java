@@ -1,65 +1,61 @@
+import org.howietkl.httpserver.EchoService;
+import org.howietkl.httpserver.Request;
+import org.howietkl.httpserver.UserAgentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
+  private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
   public static void main(String[] args) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.out.println("Logs from your program will appear here!");
-
-     try {
-       ServerSocket serverSocket = new ServerSocket(4221);
-
-       // Since the tester restarts your program quite often, setting SO_REUSEADDR
-       // ensures that we don't run into 'Address already in use' errors
-       serverSocket.setReuseAddress(true);
-       while (!serverSocket.isClosed()) {
-         System.out.println("accepted new connection");
-         Socket socket = serverSocket.accept(); // Wait for connection from client.
-         PrintStream out = new PrintStream(socket.getOutputStream());
-         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-         String requestLine = in.readLine();
-         String[] requestLineParts = requestLine.split(" ");
-
-         if ("/".equals(requestLineParts[1])) {
-           out.print("HTTP/1.1 200 OK\r\n\r\n");
-         } else if (requestLineParts[1].startsWith("/echo/")) {
-           String echo = requestLineParts[1].substring(6);
-           out.print("HTTP/1.1 200 OK\r\n");
-           out.print("Content-Type: text/plain\r\n");
-           out.print("Content-Length: ");
-           out.print(echo.length());
-           out.print("\r\n\r\n");
-           out.print(echo);
-           out.print("\r\n");
-         } else if (requestLineParts[1].equals("/user-agent")) {
-           String header;
-           String userAgent = "";
-           while ((header = in.readLine()) != "") {
-             if (header.startsWith("User-Agent:")) {
-               userAgent = header.substring(11).trim();
-               break;
-             }
-           }
-           out.print("HTTP/1.1 200 OK\r\n");
-           out.print("Content-Type: text/plain\r\n");
-           out.print("Content-Length: ");
-           out.print(userAgent.length());
-           out.print("\r\n\r\n");
-           out.print(userAgent);
-           out.print("\r\n");
-         } else {
-           out.print("HTTP/1.1 404 Not Found\r\n\r\n");
-         }
-         out.flush();
-         out.close();
-         in.close();
-       }
-     } catch (IOException e) {
-       System.out.println("IOException: " + e.getMessage());
-     }
+    try {
+      ServerSocket serverSocket = new ServerSocket(4221);
+      ExecutorService executorService = Executors.newFixedThreadPool(4);
+      // Since the tester restarts your program quite often, setting SO_REUSEADDR
+      // ensures that we don't run into 'Address already in use' errors
+      serverSocket.setReuseAddress(true);
+      executorService.submit(() -> handleRequest(serverSocket));
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
   }
+
+  private static void handleRequest(ServerSocket serverSocket) {
+    try {
+      while (!serverSocket.isClosed()) {
+        Socket socket = serverSocket.accept(); // Wait for connection from client.
+        LOG.info("accepted new connection");
+        try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+          Request request = new Request();
+          request.parseRequest(in);
+
+          String path = request.getPath();
+          if ("/".equals(path)) {
+            out.print("HTTP/1.1 200 OK\r\n\r\n");
+          } else if (path.startsWith("/echo/")) {
+            new EchoService().process(request, out);
+          } else if (path.equals("/user-agent")) {
+            new UserAgentService().process(request, out);
+          } else {
+            out.print("HTTP/1.1 404 Not Found\r\n\r\n");
+          }
+          out.flush();
+        }
+      }
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+  }
+
 }
