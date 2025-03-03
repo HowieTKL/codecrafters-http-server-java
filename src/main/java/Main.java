@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,12 +16,19 @@ public class Main {
        // Since the tester restarts your program quite often, setting SO_REUSEADDR
        // ensures that we don't run into 'Address already in use' errors
        serverSocket.setReuseAddress(true);
-
+       System.out.println("accepted new connection");
        Socket socket = serverSocket.accept(); // Wait for connection from client.
        PrintStream out = new PrintStream(socket.getOutputStream());
-       out.print("HTTP/1.1 200 OK\r\n\r\n");
+       BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+       String requestLine = in.readLine();
+       String[] requestLineParts = requestLine.split(" ");
+       if ("/".equals(requestLineParts[1])) {
+         out.print("HTTP/1.1 200 OK\r\n\r\n");
+       } else {
+         out.print("HTTP/1.1 404 OK\r\n\r\n");
+       }
        out.flush();
-       System.out.println("accepted new connection");
+
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      }
