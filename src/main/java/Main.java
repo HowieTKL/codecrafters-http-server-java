@@ -27,7 +27,7 @@ public class Main {
          out.print("HTTP/1.1 200 OK\r\n\r\n");
        } else if (requestLineParts[1].startsWith("/echo/")) {
          String echo = requestLineParts[1].substring(6);
-         out.print("HTTP/1.1 200 OK\r\n\r\n");
+         out.print("HTTP/1.1 200 OK\r\n");
          out.print("Content-Type: text/plain\r\n");
          out.print("Content-Length: ");
          out.print(echo.length());
