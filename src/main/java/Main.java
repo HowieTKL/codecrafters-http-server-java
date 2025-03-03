@@ -16,45 +16,48 @@ public class Main {
        // Since the tester restarts your program quite often, setting SO_REUSEADDR
        // ensures that we don't run into 'Address already in use' errors
        serverSocket.setReuseAddress(true);
-       System.out.println("accepted new connection");
-       Socket socket = serverSocket.accept(); // Wait for connection from client.
-       PrintStream out = new PrintStream(socket.getOutputStream());
-       BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-       String requestLine = in.readLine();
-       String[] requestLineParts = requestLine.split(" ");
+       while (!serverSocket.isClosed()) {
+         System.out.println("accepted new connection");
+         Socket socket = serverSocket.accept(); // Wait for connection from client.
+         PrintStream out = new PrintStream(socket.getOutputStream());
+         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+         String requestLine = in.readLine();
+         String[] requestLineParts = requestLine.split(" ");
 
-       if ("/".equals(requestLineParts[1])) {
-         out.print("HTTP/1.1 200 OK\r\n\r\n");
-       } else if (requestLineParts[1].startsWith("/echo/")) {
-         String echo = requestLineParts[1].substring(6);
-         out.print("HTTP/1.1 200 OK\r\n");
-         out.print("Content-Type: text/plain\r\n");
-         out.print("Content-Length: ");
-         out.print(echo.length());
-         out.print("\r\n\r\n");
-         out.print(echo);
-         out.print("\r\n");
-       } else if (requestLineParts[1].equals("/user-agent")) {
-         String header;
-         String userAgent = "";
-         while ((header = in.readLine()) != "") {
-           if (header.startsWith("User-Agent:")) {
-             userAgent = header.substring(11).trim();
-             break;
+         if ("/".equals(requestLineParts[1])) {
+           out.print("HTTP/1.1 200 OK\r\n\r\n");
+         } else if (requestLineParts[1].startsWith("/echo/")) {
+           String echo = requestLineParts[1].substring(6);
+           out.print("HTTP/1.1 200 OK\r\n");
+           out.print("Content-Type: text/plain\r\n");
+           out.print("Content-Length: ");
+           out.print(echo.length());
+           out.print("\r\n\r\n");
+           out.print(echo);
+           out.print("\r\n");
+         } else if (requestLineParts[1].equals("/user-agent")) {
+           String header;
+           String userAgent = "";
+           while ((header = in.readLine()) != "") {
+             if (header.startsWith("User-Agent:")) {
+               userAgent = header.substring(11).trim();
+               break;
+             }
            }
+           out.print("HTTP/1.1 200 OK\r\n");
+           out.print("Content-Type: text/plain\r\n");
+           out.print("Content-Length: ");
+           out.print(userAgent.length());
+           out.print("\r\n\r\n");
+           out.print(userAgent);
+           out.print("\r\n");
+         } else {
+           out.print("HTTP/1.1 404 Not Found\r\n\r\n");
          }
-         out.print("HTTP/1.1 200 OK\r\n");
-         out.print("Content-Type: text/plain\r\n");
-         out.print("Content-Length: ");
-         out.print(userAgent.length());
-         out.print("\r\n\r\n");
-         out.print(userAgent);
-         out.print("\r\n");
-       } else {
-         out.print("HTTP/1.1 404 Not Found\r\n\r\n");
+         out.flush();
+         out.close();
+         in.close();
        }
-       out.flush();
-
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      }
