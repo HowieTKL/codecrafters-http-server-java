@@ -34,6 +34,22 @@ public class Main {
          out.print("\r\n\r\n");
          out.print(echo);
          out.print("\r\n");
+       } else if (requestLineParts[1].equals("/user-agent")) {
+         String header;
+         String userAgent = "";
+         while ((header = in.readLine()) != "") {
+           if (header.startsWith("User-Agent:")) {
+             userAgent = header.substring(11).trim();
+             break;
+           }
+         }
+         out.print("HTTP/1.1 200 OK\r\n");
+         out.print("Content-Type: text/plain\r\n");
+         out.print("Content-Length: ");
+         out.print(userAgent.length());
+         out.print("\r\n\r\n");
+         out.print(userAgent);
+         out.print("\r\n");
        } else {
          out.print("HTTP/1.1 404 Not Found\r\n\r\n");
        }
