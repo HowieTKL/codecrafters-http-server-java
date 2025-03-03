@@ -6,7 +6,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class BasicService implements Service {
   private static final Logger LOG = LoggerFactory.getLogger(BasicService.class);
@@ -19,14 +22,21 @@ public class BasicService implements Service {
   public Service process(Request request, PrintWriter out) throws IOException {
     LOG.info("BasicService");
 
-    // gzip support
-    String encoding = request.getHeaders().get(Constants.HEADER_ACCEPT_ENCODING);
-    if ("gzip".equals(encoding)) {
-      headers.put(Constants.HEADER_CONTENT_ENCODING, encoding);
+    List<String> supportedEncodings = getSupportedEncodings(request.getHeaders().get(Constants.HEADER_ACCEPT_ENCODING));
+    if (!supportedEncodings.isEmpty()) {
+      headers.put(Constants.HEADER_CONTENT_ENCODING, String.join(",", supportedEncodings));
     }
 
     generate(out);
     return this;
+  }
+
+  static List<String> getSupportedEncodings(String encodings) {
+    return Stream.of(encodings.split(","))
+        .map(String::trim)
+        .filter(e -> "gzip".equals(e))
+        .distinct()
+        .collect(Collectors.toList());
   }
 
   public void setBody(String body) {
@@ -65,10 +75,6 @@ public class BasicService implements Service {
 
   public String getBody() {
     return body;
-  }
-
-  public void addAcceptEncoding(String encoding) {
-    headers.put(Constants.HEADER_ACCEPT_ENCODING, encoding);
   }
 
 }
