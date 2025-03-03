@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
@@ -14,16 +15,29 @@ public class FileService extends Response implements Service {
   private static File dir;
 
   public void process(Request request, PrintWriter out) throws IOException {
-    LOG.info("FileService");
     String fileName = request.getPath().substring("/files/".length());
     File file = new File(dir, fileName);
-    if (!file.exists()) {
-      generate404(out);
-    } else {
-      byte[] data = Files.readAllBytes(file.toPath());
-      setBody(new String(data, StandardCharsets.UTF_8));
-      setContentType(Constants.CONTENT_TYPE_APPLICATION_OCTET_STREAM);
-      setStatus(Constants.Status.STATUS_OK);
+    if (request.getMethod().equalsIgnoreCase("GET")) {
+      LOG.info("FileService GET");
+      if (!file.exists()) {
+        generate404(out);
+      } else {
+        byte[] data = Files.readAllBytes(file.toPath());
+        setBody(new String(data, StandardCharsets.UTF_8));
+        setContentType(Constants.CONTENT_TYPE_APPLICATION_OCTET_STREAM);
+        setStatus(Constants.Status.STATUS_OK);
+        generate(out);
+      }
+    } else if (request.getMethod().equalsIgnoreCase("POST")) {
+      LOG.info("FileService POST");
+      try (FileOutputStream fos = new FileOutputStream(file)) {
+        String data = request.getBody();
+        if (data == null) {
+          data = "";
+        }
+        fos.write(data.getBytes(StandardCharsets.UTF_8));
+      }
+      setStatus(Constants.Status.STATUS_CREATED);
       generate(out);
     }
   }

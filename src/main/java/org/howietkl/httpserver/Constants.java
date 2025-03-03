@@ -12,6 +12,7 @@ public class Constants {
 
   public enum Status {
     STATUS_OK(200, "OK"),
+    STATUS_CREATED(201, "Created"),
     STATUS_NOT_FOUND(404, "Not Found"),;
 
     private int code;
