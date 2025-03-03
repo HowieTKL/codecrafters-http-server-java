@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,9 @@ public class BasicService implements Service {
   }
 
   static List<String> getSupportedEncodings(String encodings) {
+    if (encodings == null) {
+      return Collections.emptyList();
+    }
     return Stream.of(encodings.split(","))
         .map(String::trim)
         .filter(e -> "gzip".equals(e))
