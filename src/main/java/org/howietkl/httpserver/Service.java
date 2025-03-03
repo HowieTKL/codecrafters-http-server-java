@@ -4,5 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 public interface Service {
-  void process(Request request, PrintWriter out) throws IOException;
+  Service process(Request request, PrintWriter out) throws IOException;
+  Service setStatus(Constants.Status status);
 }

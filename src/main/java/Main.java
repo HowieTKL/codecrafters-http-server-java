@@ -44,7 +44,9 @@ public class Main {
 
         String path = request.getPath();
         if ("/".equals(path)) {
-          new Response().generate200(out);
+          new BasicService()
+              .setStatus(Constants.Status.STATUS_OK)
+              .process(request, out);
         } else if (path.startsWith("/echo/")) {
           new EchoService().process(request, out);
         } else if (path.equals("/user-agent")) {
@@ -52,9 +54,10 @@ public class Main {
         } else if (path.startsWith("/files/")) {
           new FileService().process(request, out);
         } else {
-          new Response().generate404(out);
+          new BasicService()
+              .setStatus(Constants.Status.STATUS_NOT_FOUND)
+              .process(request, out);
         }
-        out.flush();
       }
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
