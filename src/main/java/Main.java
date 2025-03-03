@@ -22,8 +22,18 @@ public class Main {
        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
        String requestLine = in.readLine();
        String[] requestLineParts = requestLine.split(" ");
+
        if ("/".equals(requestLineParts[1])) {
          out.print("HTTP/1.1 200 OK\r\n\r\n");
+       } else if (requestLineParts[1].startsWith("/echo/")) {
+         String echo = requestLineParts[1].substring(6);
+         out.print("HTTP/1.1 200 OK\r\n\r\n");
+         out.print("Content-Type: text/plain\r\n");
+         out.print("Content-Length: ");
+         out.print(echo.length());
+         out.print("\r\n\r\n");
+         out.print(echo);
+         out.print("\r\n");
        } else {
          out.print("HTTP/1.1 404 Not Found\r\n\r\n");
        }
