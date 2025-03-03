@@ -10,7 +10,7 @@ public class EchoService extends Response implements Service {
 
   public void process(Request request, PrintWriter out) {
     LOG.info("EchoService");
-    setBody(request.getPath().substring(6));
+    setBody(request.getPath().substring("/echo/".length()));
     setContentType(Constants.CONTENT_TYPE_TEXT_PLAIN);
     setStatus(Constants.Status.STATUS_OK);
     generate(out);
