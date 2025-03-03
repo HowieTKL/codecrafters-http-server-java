@@ -25,7 +25,7 @@ public class Main {
        if ("/".equals(requestLineParts[1])) {
          out.print("HTTP/1.1 200 OK\r\n\r\n");
        } else {
-         out.print("HTTP/1.1 404 OK\r\n\r\n");
+         out.print("HTTP/1.1 404 Not Found\r\n\r\n");
        }
        out.flush();
 
