@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +37,7 @@ public class Main {
   private static void handleRequest(Socket socket) {
     try {
       LOG.info("accepted new connection");
-      try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      try (PrintStream out = new PrintStream(socket.getOutputStream(), true);
            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
         Request request = new Request();
         request.parseRequest(in);

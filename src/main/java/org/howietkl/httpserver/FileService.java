@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -14,7 +14,7 @@ public class FileService extends BasicService implements Service {
   private static final Logger LOG = LoggerFactory.getLogger(FileService.class);
   private static File dir;
 
-  public Service process(Request request, PrintWriter out) throws IOException {
+  public Service process(Request request, PrintStream out) throws IOException {
     String fileName = request.getPath().substring("/files/".length());
     File file = new File(dir, fileName);
     if (request.getMethod().equalsIgnoreCase("GET")) {

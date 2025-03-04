@@ -5,7 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.PrintStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,10 +21,11 @@ public class BasicService implements Service {
 
   private Constants.Status status = Constants.Status.STATUS_OK;
   private final Map<String, String> headers = new HashMap<>();
-  private String body = "";
+  private String body;
+  private byte[] bodyBytes;
 
   @Override
-  public Service process(Request request, PrintWriter out) throws IOException {
+  public Service process(Request request, PrintStream out) throws IOException {
     LOG.info("BasicService");
 
     List<String> supportedEncodings = getSupportedEncodings(request.getHeaders().get(Constants.HEADER_ACCEPT_ENCODING));
@@ -34,8 +36,9 @@ public class BasicService implements Service {
         GZIPOutputStream gzippingOut = new GZIPOutputStream(gzippedOut);
         gzippingOut.write(getBody().getBytes(StandardCharsets.UTF_8));
         gzippingOut.close();
-        //setBody(bytesToHex(gzippedOut.toByteArray()));
-        setBody(new String(gzippedOut.toByteArray(), StandardCharsets.UTF_8));
+        // setBody(bytesToHex(gzippedOut.toByteArray()));
+        // setBody(new String(gzippedOut.toByteArray(), StandardCharsets.UTF_8));
+        setBody(gzippedOut.toByteArray());
       }
     }
     setContentType(Constants.CONTENT_TYPE_TEXT_PLAIN);
@@ -66,10 +69,13 @@ public class BasicService implements Service {
   }
 
   public void setBody(String body) {
-    if (body == null) {
-      body = "";
-    }
     this.body = body;
+    bodyBytes = null;
+  }
+
+  public void setBody(byte[] bytes) {
+    body = null;
+    bodyBytes = bytes;
   }
 
   public void setContentType(String contentType) {
@@ -81,20 +87,24 @@ public class BasicService implements Service {
     return this;
   }
 
-  public void generate(PrintWriter out) {
+  public void generate(PrintStream out) throws IOException {
     // e.g. HTTP/1.1 200 OK
     out.print(Constants.VERSION);
     out.print(" ");
     out.print(status);
     out.print("\r\n");
 
-    if (!body.isEmpty()) {
+    if (body != null && !body.isEmpty()) {
       headers.put(Constants.HEADER_CONTENT_LENGTH, String.valueOf(body.length()));
+    } else if (bodyBytes != null) {
+      headers.put(Constants.HEADER_CONTENT_LENGTH, String.valueOf(bodyBytes.length));
     }
     headers.forEach((k, v) -> out.print(k + ": " + v + "\r\n"));
     out.print("\r\n");
-    if (!body.isEmpty()) {
+    if (body != null && !body.isEmpty()) {
       out.print(body);
+    } else if (bodyBytes != null) {
+      out.write(bodyBytes);
     }
     out.flush();
   }
