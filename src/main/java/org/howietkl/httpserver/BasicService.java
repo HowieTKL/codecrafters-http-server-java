@@ -40,9 +40,8 @@ public class BasicService implements Service {
         // setBody(new String(gzippedOut.toByteArray(), StandardCharsets.UTF_8));
         setBody(gzippedOut.toByteArray());
       }
+      setContentType(Constants.CONTENT_TYPE_TEXT_PLAIN);
     }
-    setContentType(Constants.CONTENT_TYPE_TEXT_PLAIN);
-    setStatus(Constants.Status.STATUS_OK);
 
     generate(out);
     return this;
