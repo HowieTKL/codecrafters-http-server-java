@@ -34,7 +34,8 @@ public class BasicService implements Service {
         GZIPOutputStream gzippingOut = new GZIPOutputStream(gzippedOut);
         gzippingOut.write(getBody().getBytes(StandardCharsets.UTF_8));
         gzippingOut.close();
-        setBody(bytesToHex(gzippedOut.toByteArray()));
+        //setBody(bytesToHex(gzippedOut.toByteArray()));
+        setBody(new String(gzippedOut.toByteArray(), StandardCharsets.UTF_8));
       }
     }
     setContentType(Constants.CONTENT_TYPE_TEXT_PLAIN);
