@@ -3,14 +3,17 @@ package org.howietkl.httpserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 
 public class BasicService implements Service {
   private static final Logger LOG = LoggerFactory.getLogger(BasicService.class);
@@ -26,7 +29,16 @@ public class BasicService implements Service {
     List<String> supportedEncodings = getSupportedEncodings(request.getHeaders().get(Constants.HEADER_ACCEPT_ENCODING));
     if (!supportedEncodings.isEmpty()) {
       headers.put(Constants.HEADER_CONTENT_ENCODING, String.join(",", supportedEncodings));
+      if (getBody() != null) {
+        ByteArrayOutputStream gzippedOut = new ByteArrayOutputStream();
+        GZIPOutputStream gzippingOut = new GZIPOutputStream(gzippedOut);
+        gzippingOut.write(getBody().getBytes(StandardCharsets.UTF_8));
+        gzippingOut.close();
+        setBody(bytesToHex(gzippedOut.toByteArray()));
+      }
     }
+    setContentType(Constants.CONTENT_TYPE_TEXT_PLAIN);
+    setStatus(Constants.Status.STATUS_OK);
 
     generate(out);
     return this;
@@ -41,6 +53,15 @@ public class BasicService implements Service {
         .filter(e -> "gzip".equals(e))
         .distinct()
         .collect(Collectors.toList());
+  }
+
+  static String bytesToHex(byte[] bytes) {
+    StringBuilder hexString = new StringBuilder();
+    for (byte b : bytes) {
+      String hex = String.format("%02x", b);
+      hexString.append(hex);
+    }
+    return hexString.toString();
   }
 
   public void setBody(String body) {
