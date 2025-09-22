@@ -81,6 +81,11 @@ public class BasicService implements Service {
     headers.put(Constants.HEADER_CONTENT_TYPE, contentType);
   }
 
+  public Service closeConnection() {
+    headers.put(Constants.HEADER_CONNECTION, "close");
+    return this;
+  }
+
   public Service setStatus(Constants.Status  status) {
     this.status = status;
     return this;

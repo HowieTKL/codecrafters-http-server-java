@@ -3,6 +3,7 @@ import org.howietkl.httpserver.Constants;
 import org.howietkl.httpserver.EchoService;
 import org.howietkl.httpserver.FileService;
 import org.howietkl.httpserver.Request;
+import org.howietkl.httpserver.Service;
 import org.howietkl.httpserver.UserAgentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,32 +48,35 @@ public class Main {
       for (;;) {
         Request request = new Request();
         request.parseRequest(in);
+        Service service;
 
         String path = request.getPath();
         Map<String, String> headers = request.getHeaders();
 
+        if ("/".equals(path)) {
+          service = new BasicService()
+              .setStatus(Constants.Status.STATUS_OK);
+        } else if (path.startsWith("/echo/")) {
+          service = new EchoService();
+        } else if (path.equals("/user-agent")) {
+          service = new UserAgentService();
+        } else if (path.startsWith("/files/")) {
+          service = new FileService();
+        } else {
+          service = new BasicService()
+              .setStatus(Constants.Status.STATUS_NOT_FOUND);
+        }
         if (!headers.isEmpty()) {
           String c = headers.get("Connection");
           if ("close".equals(c)) {
+            service
+                .closeConnection()
+                .process(request, out);
             LOG.info("Connection close");
             break;
           }
         }
-        if ("/".equals(path)) {
-          new BasicService()
-              .setStatus(Constants.Status.STATUS_OK)
-              .process(request, out);
-        } else if (path.startsWith("/echo/")) {
-          new EchoService().process(request, out);
-        } else if (path.equals("/user-agent")) {
-          new UserAgentService().process(request, out);
-        } else if (path.startsWith("/files/")) {
-          new FileService().process(request, out);
-        } else {
-          new BasicService()
-              .setStatus(Constants.Status.STATUS_NOT_FOUND)
-              .process(request, out);
-        }
+        service.process(request, out);
       }
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
