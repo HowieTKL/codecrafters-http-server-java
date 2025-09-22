@@ -1,4 +1,9 @@
-import org.howietkl.httpserver.*;
+import org.howietkl.httpserver.BasicService;
+import org.howietkl.httpserver.Constants;
+import org.howietkl.httpserver.EchoService;
+import org.howietkl.httpserver.FileService;
+import org.howietkl.httpserver.Request;
+import org.howietkl.httpserver.UserAgentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,14 +41,23 @@ public class Main {
   }
 
   private static void handleRequest(Socket socket) {
-    try {
-      LOG.info("accepted new connection");
-      try (PrintStream out = new PrintStream(socket.getOutputStream(), true);
-           BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+    LOG.info("accepted new connection");
+    try (PrintStream out = new PrintStream(socket.getOutputStream(), true);
+         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+      for (;;) {
         Request request = new Request();
         request.parseRequest(in);
 
         String path = request.getPath();
+        Map<String, String> headers = request.getHeaders();
+
+        if (!headers.isEmpty()) {
+          String c = headers.get("Connection");
+          if ("close".equals(c)) {
+            LOG.info("Connection close");
+            break;
+          }
+        }
         if ("/".equals(path)) {
           new BasicService()
               .setStatus(Constants.Status.STATUS_OK)
